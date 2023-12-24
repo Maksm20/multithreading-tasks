@@ -1,0 +1,74 @@
+package four;
+
+public class Main {
+    static volatile int x1 = 3;
+    static volatile int y1 = 3;
+    static volatile int x2 = 3;
+    static volatile int y2 = 3;
+    static volatile int[][] matrix1 = new int[x1][y1];
+    static volatile int[][] matrix2 = new int[x2][y2];
+    static volatile int[][] matrix2T = new int[y2][x2];
+    private static Thread1[][] thread;
+
+    public static void main(String[] args) throws InterruptedException {
+        int counter = 0;
+        for(int i = 0; i < x1; i++) {
+            for(int j = 0; j < y1; j++) {
+                matrix1[i][j] = counter;
+                counter++;
+            }
+        }
+        for(int i = 0; i < x2; i++) {
+            for(int j = 0; j < y2; j++) {
+                matrix2[i][j] = counter;
+                counter++;
+            }
+        }
+        for(int i = 0; i < 3; i++) {
+            for(int j = 0; j < 3; j++) {
+                matrix2T[i][j] = matrix2[j][i];
+            }
+        }
+        thread = new Thread1[x1][y2];
+        for(int i = 0; i < x1; i++) {
+            for(int j = 0; j < y2; j++) {
+                thread[i][j] = new Thread1(matrix1[i],matrix2T[j]);
+                thread[i][j].start();
+            }
+        }
+        for(int i = 0; i < x1; i++) {
+            for(int j = 0; j < y2; j++) {
+                thread[i][j].join();
+            }
+        }
+        for(int i = 0; i < x1; i++) {
+            for(int j = 0; j < y2; j++) {
+                System.out.print(thread[i][j].getResult() + " ");
+            }
+            System.out.println("");
+        }
+    }
+    static class Thread1 extends Thread {
+        private int result;
+        private final int[] row;
+        private final int[] column;
+        public Thread1(int[] m1, int[] m2) {
+            row = m1;
+            column = m2;
+        }
+        public int getResult()
+        {
+            return result;
+        }
+        @Override
+        public void run() {
+            int value = 0;
+            for (int k = 0; k < y1; k++) {
+                value += row[k] * column[k];
+            }
+            result = value;
+        }
+    }
+}
+
+
