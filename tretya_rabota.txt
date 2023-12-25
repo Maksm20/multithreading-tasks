@@ -1,0 +1,122 @@
+
+
+public class Main {
+    public static void main(String[] args) {
+        Buffer buffer = new Buffer(3);
+
+        Thread producerThread = new Thread(new Producer(buffer));
+        Thread consumerThread = new Thread(new Consumer(buffer));
+
+        producerThread.start();
+        consumerThread.start();
+    }
+}
+
+import java.util.LinkedList;
+import java.util.Queue;
+class Buffer {
+    private final Queue<Integer> data;
+    private final int maxSize;
+
+    public Buffer(int maxSize) {
+        this.data = new LinkedList<>();
+        this.maxSize = maxSize;
+    }
+
+    public synchronized void produce(int value) throws InterruptedException {
+        while (data.size() == maxSize) {
+            wait();
+        }
+        data.add(value);
+        System.out.println("produce: " + value);
+        notify();
+    }
+
+    public synchronized void consume() throws InterruptedException {
+        while (data.isEmpty()) {
+            wait();
+        }
+        int value = data.poll();
+        System.out.println("consume: " + value);
+        notify();
+    }
+}
+
+
+class Consumer implements Runnable {
+    private final Buffer buffer;
+    public Consumer(Buffer buffer) {
+        this.buffer = buffer;
+    }
+    @Override
+    public void run() {
+        try {
+            while (true){
+                buffer.consume();
+                Thread.sleep(1000);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+import java.util.Random;
+
+class Producer implements Runnable {
+    private final Buffer buffer;
+    public Producer(Buffer buffer) {
+        this.buffer = buffer;
+    }
+    @Override
+    public void run() {
+        try {
+            Random random = new Random();
+            while (true){
+                buffer.produce(random.nextInt(100));
+                Thread.sleep(499);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+
+
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Random;
+
+public class ProducerConsumer {
+    private static Queue<Integer> buffer = new LinkedList<>();
+    private static final int LIMIT = 20;
+    public synchronized void produce() {
+        while (buffer.size() == LIMIT) {
+            try {
+                wait();
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        Random random = new Random();
+        int a = random.nextInt(5);
+        buffer.add(a);
+        System.out.println("Буфер после производства: "+buffer.size()+" "+a);
+        notify();
+    }
+    public synchronized void consumer() {
+        while (buffer.size() == 0) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        System.out.println("Буфер после потребления: "+buffer.size()+" "+buffer.peek());
+        buffer.poll();
+        notify();
+    }
+}
+
